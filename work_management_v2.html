@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Work Management System</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;font-size:14px;color:#1a1a2e;background:#f0f4f8}
+.hidden{display:none!important}
+input,select,textarea{width:100%;padding:9px 12px;font-size:13px;border:1px solid #d1d9e0;border-radius:8px;background:#fff;color:#1a1a2e;font-family:inherit;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:#185FA5;box-shadow:0 0 0 3px rgba(24,95,165,.1)}
+textarea{resize:vertical;min-height:100px}
+label{font-size:12px;color:#5a6a7e;display:block;margin-bottom:4px;margin-top:10px}
+.btn{padding:8px 16px;font-size:13px;border-radius:8px;cursor:pointer;border:1px solid #d1d9e0;background:#fff;color:#1a1a2e;transition:all .15s;font-family:inherit}
+.btn:hover{background:#f0f4f8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:#185FA5;color:#fff;border-color:#185FA5}
+.btn-primary:hover:not(:disabled){background:#0C447C}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-danger{color:#A32D2D;border-color:#F09595}
+.btn-add{background:#EAF3DE;color:#3B6D11;border-color:#7CB95A;font-size:12px;padding:5px 12px}
+.btn-add:hover{background:#d4ecbe}
+
+/* AUTH */
+.auth-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)}
+.auth-box{width:100%;max-width:380px;background:#fff;border-radius:16px;padding:32px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.auth-logo{display:flex;align-items:center;gap:10px;margin-bottom:28px}
+.auth-logo-icon{width:36px;height:36px;background:#185FA5;border-radius:10px;display:flex;align-items:center;justify-content:center}
+.auth-err{background:#FCEBEB;border:1px solid #F09595;border-radius:8px;padding:10px 12px;font-size:13px;color:#A32D2D;margin-bottom:12px}
+.auth-ok{background:#EAF3DE;border:1px solid #7CB95A;border-radius:8px;padding:10px 12px;font-size:13px;color:#3B6D11;margin-bottom:12px}
+.auth-toggle{font-size:13px;color:#5a6a7e;margin-top:14px;text-align:center}
+.auth-toggle a{color:#185FA5;cursor:pointer;text-decoration:none}
+
+/* APP */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:1px solid #e8edf2;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tabs{display:flex;gap:2px;padding:10px 20px 0;background:#fff;border-bottom:1px solid #e8edf2}
+.tab{padding:7px 16px;font-size:13px;border-radius:8px 8px 0 0;cursor:pointer;color:#5a6a7e;border:1px solid transparent;border-bottom:none;transition:all .15s}
+.tab.active{color:#1a1a2e;background:#f0f4f8;border-color:#e8edf2;font-weight:500}
+.content{flex:1;overflow-y:auto;padding:20px;background:#f0f4f8}
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:500}
+.s-pending{background:#E6F1FB;color:#185FA5}
+.s-inprog{background:#FAEEDA;color:#854F0B}
+.s-done{background:#EAF3DE;color:#3B6D11}
+.p-low{background:#F1EFE8;color:#5F5E5A}
+.p-med{background:#E6F1FB;color:#185FA5}
+.p-high{background:#FAEEDA;color:#854F0B}
+.p-urg{background:#FCEBEB;color:#A32D2D}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:12px;padding:14px 16px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.stat-label{font-size:12px;color:#5a6a7e;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:600}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.06);cursor:pointer;transition:box-shadow .2s}
+.card:hover{box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.job-row{display:grid;grid-template-columns:36px 1fr 90px 78px 90px 90px 90px 52px;gap:6px;align-items:center;padding:10px 14px;background:#fff;border-radius:10px;margin-bottom:6px;font-size:13px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05);transition:box-shadow .15s}
+.job-row:hover{box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.col-hdr{display:grid;grid-template-columns:36px 1fr 90px 78px 90px 90px 90px 52px;gap:6px;padding:5px 14px;font-size:11px;color:#5a6a7e;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.filter-sel{width:auto!important;min-width:120px;font-size:12px}
+.section-title{font-size:11px;font-weight:600;color:#5a6a7e;text-transform:uppercase;letter-spacing:.06em;margin:16px 0 8px}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding-top:30px;overflow-y:auto}
+.modal{background:#fff;border-radius:16px;width:620px;max-width:96vw;margin-bottom:40px;padding:24px 28px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.remark-box{background:#f0f4f8;border-radius:8px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-wrap}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+.spin-dark{border-color:#d1d9e0;border-top-color:#185FA5}
+@keyframes spin{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:56px 0;color:#8a9ab0;font-size:13px}
+.dept-bar{flex:1;background:#e8edf2;border-radius:99px;height:8px;overflow:hidden}
+.dept-fill{background:#185FA5;height:100%;border-radius:99px;transition:width .5s}
+
+/* Job Task Block */
+.task-block{background:#f8fafc;border:1px solid #e8edf2;border-radius:10px;padding:14px 16px;margin-bottom:10px;position:relative}
+.task-block-num{font-size:11px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.remove-task{position:absolute;top:10px;right:10px;background:none;border:none;cursor:pointer;color:#c0c8d4;font-size:16px;transition:color .15s}
+.remove-task:hover{color:#A32D2D}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-view" class="auth-wrap">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><svg width="18" height="18" fill="none" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="white"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" opacity=".4"/></svg></div>
+      <span style="font-size:17px;font-weight:600">Work Management System</span>
+    </div>
+    <div id="auth-msg" class="hidden"></div>
+    <div id="login-form">
+      <div style="font-size:20px;font-weight:600;margin-bottom:6px">Sign In</div>
+      <p style="font-size:13px;color:#5a6a7e;margin-bottom:20px">Sign in to your account to continue</p>
+      <label>Email Address</label>
+      <input type="email" id="login-email" placeholder="email@example.com" autocomplete="email" style="margin-bottom:10px">
+      <label>Password</label>
+      <input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password" style="margin-bottom:10px" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn btn-primary" style="width:100%;margin-top:4px;padding:10px" id="login-btn" onclick="doLogin()">Sign In</button>
+      <p class="auth-toggle">Don't have an account? <a onclick="toggleAuth(true)">Register here</a></p>
+    </div>
+    <div id="register-form" class="hidden">
+      <div style="font-size:20px;font-weight:600;margin-bottom:6px">Create Account</div>
+      <p style="font-size:13px;color:#5a6a7e;margin-bottom:20px">Register a new account to get started</p>
+      <label>Full Name</label>
+      <input type="text" id="reg-name" placeholder="Your full name" autocomplete="name" style="margin-bottom:10px">
+      <label>Email Address</label>
+      <input type="email" id="reg-email" placeholder="email@example.com" autocomplete="email" style="margin-bottom:10px">
+      <label>Password (min. 6 characters)</label>
+      <input type="password" id="reg-pw" placeholder="••••••••" autocomplete="new-password" style="margin-bottom:10px" onkeydown="if(event.key==='Enter')doRegister()">
+      <button class="btn btn-primary" style="width:100%;margin-top:4px;padding:10px" id="reg-btn" onclick="doRegister()">Create Account</button>
+      <p class="auth-toggle">Already have an account? <a onclick="toggleAuth(false)">Sign in</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-view" class="app hidden">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div style="width:30px;height:30px;background:#185FA5;border-radius:8px;display:flex;align-items:center;justify-content:center"><svg width="16" height="16" fill="none" viewBox="0 0 16 16"><rect x="1" y="1" width="6" height="6" rx="1.5" fill="white"/><rect x="9" y="1" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="1" y="9" width="6" height="6" rx="1.5" fill="white" opacity=".6"/><rect x="9" y="9" width="6" height="6" rx="1.5" fill="white" opacity=".4"/></svg></div>
+      <span style="font-weight:600;font-size:15px">Work Management System</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="user-label" style="font-size:13px;color:#5a6a7e"></span>
+      <button class="btn btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <div class="tab active" id="tab-dash" onclick="switchTab('dashboard',this)">📊 Dashboard</div>
+    <div class="tab" id="tab-jobs" onclick="switchTab('jobs',this)">📋 Job List</div>
+    <div class="tab" onclick="openForm(null)" style="color:#185FA5;font-weight:500">＋ New Job</div>
+  </div>
+  <div class="content" id="content"><div class="empty"><span class="spin spin-dark"></span> Loading...</div></div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg hidden" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal"><div id="modal-body"></div></div>
+</div>
+
+<script>
+const SUPA_URL='https://mmetwzpwnadckgrocxef.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1tZXR3enB3bmFkY2tncm9jeGVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNjM4ODEsImV4cCI6MjA5MjkzOTg4MX0.c8rMUy-mwMknDp0soPUmpmkZp26LE8T0tW3IEWr0Elc';
+
+const DEPTS=['Sales','Engineering','Design','Finance','Admin','IT'];
+const STATUS=[{k:'pending',l:'Not Started',cls:'s-pending'},{k:'inprog',l:'In Progress',cls:'s-inprog'},{k:'done',l:'Completed',cls:'s-done'}];
+const PRIORITY=[{k:'low',l:'LOW',cls:'p-low'},{k:'med',l:'MEDIUM',cls:'p-med'},{k:'high',l:'HIGH',cls:'p-high'},{k:'urg',l:'URGENT',cls:'p-urg'}];
+const JOB_TYPES=['Install Equipment','Dismantle Equipment','Remove Equipment','Delivery Equipment'];
+const INSTALLERS=['Roy','Haffiz','Others'];
+const TRANSPORT=['Haffiz','Roy','Others'];
+
+// Auto-assign logic
+function autoAssign(jobType){
+  if(jobType==='Install Equipment'||jobType==='Dismantle Equipment') return {installer:'Roy',transport:''};
+  if(jobType==='Remove Equipment'||jobType==='Delivery Equipment') return {installer:'',transport:'Haffiz'};
+  return {installer:'',transport:''};
+}
+
+let session=null,user=null,userName='',jobs=[],currentTab='dashboard';
+let fStatus='',fPriority='',fDept='';
+let taskCounter=0;
+
+function showMsg(msg,isErr=true){
+  const el=document.getElementById('auth-msg');
+  el.className=isErr?'auth-err':'auth-ok';
+  el.textContent=msg;el.classList.remove('hidden');
+}
+function toggleAuth(r){
+  document.getElementById('auth-msg').classList.add('hidden');
+  document.getElementById('login-form').classList.toggle('hidden',r);
+  document.getElementById('register-form').classList.toggle('hidden',!r);
+}
+async function callAuth(path,body){
+  try{
+    const r=await fetch(SUPA_URL+'/auth/v1'+path,{method:'POST',headers:{'Content-Type':'application/json','apikey':SUPA_KEY},body:JSON.stringify(body)});
+    return await r.json();
+  }catch(e){return{error:e.message}}
+}
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  if(!email||!pw)return showMsg('Please enter your email and password.');
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Signing in...';
+  const res=await callAuth('/token?grant_type=password',{email,password:pw});
+  btn.disabled=false;btn.innerHTML='Sign In';
+  if(res.error||res.error_description)return showMsg(res.error_description||res.error||'Sign in failed.');
+  session=res;user=res.user;
+  userName=user?.user_metadata?.full_name||user?.email||'';
+  localStorage.setItem('wms_session',JSON.stringify(res));
+  enterApp();
+}
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pw=document.getElementById('reg-pw').value;
+  if(!name||!email||!pw)return showMsg('Please fill in all fields.');
+  if(pw.length<6)return showMsg('Password must be at least 6 characters.');
+  const btn=document.getElementById('reg-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Creating account...';
+  const res=await callAuth('/signup',{email,password:pw,data:{full_name:name}});
+  btn.disabled=false;btn.innerHTML='Create Account';
+  if(res.error||res.error_description)return showMsg(res.error_description||res.error||'Registration failed.');
+  if(res.user&&!res.session)return showMsg('Account created! Please verify your email before signing in.',false);
+  session=res.session||res;user=res.user;
+  userName=user?.user_metadata?.full_name||user?.email||'';
+  localStorage.setItem('wms_session',JSON.stringify(session));
+  enterApp();
+}
+async function enterApp(){
+  document.getElementById('auth-view').classList.add('hidden');
+  document.getElementById('app-view').classList.remove('hidden');
+  document.getElementById('user-label').textContent=userName;
+  await loadJobs();render();
+}
+async function rest(path,opts={}){
+  const tok=session?.access_token||SUPA_KEY;
+  const r=await fetch(SUPA_URL+'/rest/v1'+path,{...opts,headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+tok,'Prefer':'return=representation',...(opts.headers||{})}});
+  const t=await r.text();
+  try{return{ok:r.ok,status:r.status,data:t?JSON.parse(t):null}}catch{return{ok:r.ok,status:r.status,data:t}}
+}
+async function loadJobs(){
+  const r=await rest('/jobs?order=created_at.desc');
+  if(r.ok&&Array.isArray(r.data))jobs=r.data;
+  else if(r.status===404||r.status===400){
+    document.getElementById('content').innerHTML=`<div style="background:#FAEEDA;border:1px solid #EF9F27;border-radius:12px;padding:16px 20px;font-size:13px;color:#854F0B;max-width:640px">
+      <strong>⚠ Database table not found.</strong><br><br>Please go to Supabase → SQL Editor → Run:<br><br>
+      <code style="display:block;background:rgba(0,0,0,.07);padding:12px;border-radius:8px;font-size:12px;line-height:2;white-space:pre-wrap">create table if not exists jobs (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz default now(),
+  created_by text, user_id uuid,
+  client text, brand text, address text,
+  assigned_to text, dept text,
+  start_date date, end_date date,
+  status text default 'pending',
+  priority text default 'med',
+  remark text,
+  tasks jsonb default '[]'
+);
+alter table jobs enable row level security;
+create policy "all_access" on jobs for all using (true) with check (true);</code></div>`;
+    return;
+  }
+  else jobs=[];
+}
+function doLogout(){
+  session=null;user=null;userName='';jobs=[];
+  localStorage.removeItem('wms_session');
+  document.getElementById('app-view').classList.add('hidden');
+  document.getElementById('auth-view').classList.remove('hidden');
+  document.getElementById('auth-msg').classList.add('hidden');
+}
+function switchTab(tab,el){
+  currentTab=tab;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');render();
+}
+function render(){currentTab==='dashboard'?renderDash():renderJobs()}
+function getSt(k){return STATUS.find(s=>s.k===k)||STATUS[0]}
+function getPr(k){return PRIORITY.find(p=>p.k===k)||PRIORITY[0]}
+
+function renderDash(){
+  const total=jobs.length,pending=jobs.filter(j=>j.status==='pending').length,
+    inprog=jobs.filter(j=>j.status==='inprog').length,done=jobs.filter(j=>j.status==='done').length,
+    urg=jobs.filter(j=>j.priority==='urg').length;
+  const dc={};DEPTS.forEach(d=>{dc[d]=jobs.filter(j=>j.dept===d).length});
+  document.getElementById('content').innerHTML=`
+    <div class="grid4">
+      <div class="stat-card"><div class="stat-label">Total Jobs</div><div class="stat-val">${total}</div></div>
+      <div class="stat-card"><div class="stat-label">Not Started</div><div class="stat-val" style="color:#185FA5">${pending}</div></div>
+      <div class="stat-card"><div class="stat-label">In Progress</div><div class="stat-val" style="color:#854F0B">${inprog}</div></div>
+      <div class="stat-card"><div class="stat-label">Completed</div><div class="stat-val" style="color:#3B6D11">${done}</div></div>
+    </div>
+    ${urg>0?`<div style="background:#FCEBEB;border:1px solid #F09595;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:#A32D2D">⚠ You have <strong>${urg}</strong> URGENT job(s) requiring immediate attention.</div>`:''}
+    <div class="grid2">
+      <div>
+        <div class="section-title">Recent Jobs</div>
+        ${jobs.length===0?'<div class="empty" style="padding:32px 0">No jobs yet. Click &ldquo;＋ New Job&rdquo; to get started.</div>':jobs.slice(0,5).map(j=>`
+          <div class="card" onclick="viewJob('${j.id}')">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+              <div style="font-weight:600;font-size:13px">${j.client||'—'}</div>
+              <span class="badge ${getPr(j.priority).cls}">${getPr(j.priority).l}</span>
+            </div>
+            <div style="font-size:12px;color:#5a6a7e;margin-bottom:8px">${j.brand||''} · ${j.start_date||''} → ${j.end_date||''}</div>
+            <span class="badge ${getSt(j.status).cls}">${getSt(j.status).l}</span>
+          </div>`).join('')}
+      </div>
+      <div>
+        <div class="section-title">Jobs by Department</div>
+        <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.06)">
+          ${DEPTS.map(d=>`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+            <div style="font-size:12px;min-width:80px;color:#1a1a2e">${d}</div>
+            <div class="dept-bar"><div class="dept-fill" style="width:${total>0?Math.round(dc[d]/total*100):0}%"></div></div>
+            <div style="font-size:12px;color:#5a6a7e;min-width:16px;text-align:right">${dc[d]}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderJobs(){
+  let f=jobs.filter(j=>{
+    if(fStatus&&j.status!==fStatus)return false;
+    if(fPriority&&j.priority!==fPriority)return false;
+    if(fDept&&j.dept!==fDept)return false;
+    return true;
+  });
+  document.getElementById('content').innerHTML=`
+    <div class="filters">
+      <select class="filter-sel" onchange="fStatus=this.value;renderJobs()">
+        <option value="">All Status</option>${STATUS.map(s=>`<option value="${s.k}"${fStatus===s.k?' selected':''}>${s.l}</option>`).join('')}
+      </select>
+      <select class="filter-sel" onchange="fPriority=this.value;renderJobs()">
+        <option value="">All Priority</option>${PRIORITY.map(p=>`<option value="${p.k}"${fPriority===p.k?' selected':''}>${p.l}</option>`).join('')}
+      </select>
+      <select class="filter-sel" onchange="fDept=this.value;renderJobs()">
+        <option value="">All Departments</option>${DEPTS.map(d=>`<option value="${d}"${fDept===d?' selected':''}>${d}</option>`).join('')}
+      </select>
+      <span style="font-size:12px;color:#5a6a7e">${f.length} record(s)</span>
+    </div>
+    <div class="col-hdr"><div>#</div><div>Client / Brand</div><div>Status</div><div>Priority</div><div>Department</div><div>Start Date</div><div>End Date</div><div>Action</div></div>
+    ${f.length===0?'<div class="empty">No jobs found.</div>':f.map(j=>`
+      <div class="job-row" onclick="viewJob('${j.id}')">
+        <div style="font-size:10px;color:#8a9ab0">${j.id.slice(-4)}</div>
+        <div><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.client||'—'}</div><div style="font-size:11px;color:#5a6a7e">${j.brand||''}</div></div>
+        <div><span class="badge ${getSt(j.status).cls}">${getSt(j.status).l}</span></div>
+        <div><span class="badge ${getPr(j.priority).cls}">${getPr(j.priority).l}</span></div>
+        <div style="font-size:12px;color:#5a6a7e">${j.dept||'—'}</div>
+        <div style="font-size:12px">${j.start_date||''}</div>
+        <div style="font-size:12px">${j.end_date||''}</div>
+        <div onclick="event.stopPropagation()"><button class="btn btn-sm" onclick="viewJob('${j.id}')">View</button></div>
+      </div>`).join('')}`;
+}
+
+function viewJob(id){
+  const j=jobs.find(x=>x.id===id);if(!j)return;
+  const st=getSt(j.status),pr=getPr(j.priority);
+  const dt=j.created_at?new Date(j.created_at).toLocaleString('en-MY'):'—';
+  let tasks=[];
+  try{tasks=typeof j.tasks==='string'?JSON.parse(j.tasks):j.tasks||[];}catch(e){}
+
+  document.getElementById('modal-body').innerHTML=`
+    <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#8a9ab0" onclick="closeModal()">✕</button>
+    <div style="display:flex;gap:6px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+      <span class="badge ${st.cls}">${st.l}</span><span class="badge ${pr.cls}">${pr.l}</span>
+      <span style="font-size:11px;color:#8a9ab0;margin-left:auto">Created: ${dt}${j.created_by?' · by '+j.created_by:''}</span>
+    </div>
+    <div style="font-size:18px;font-weight:700;margin-bottom:3px">${j.client||'—'}</div>
+    <div style="font-size:13px;color:#5a6a7e;margin-bottom:16px">${j.brand||''}</div>
+
+    <div class="section-title">Client Information</div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Brand</span><span>${j.brand||'—'}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Address</span><span style="white-space:pre-wrap">${j.address||'—'}</span></div>
+
+    <div class="section-title">Schedule & Assignment</div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Department</span><span>${j.dept||'—'}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Start Date</span><span>${j.start_date||'—'}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">End Date</span><span>${j.end_date||'—'}</span></div>
+
+    ${tasks.length>0?`
+    <div class="section-title">Tasks (${tasks.length})</div>
+    ${tasks.map((t,i)=>`
+      <div style="background:#f8fafc;border:1px solid #e8edf2;border-radius:10px;padding:12px 14px;margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px;margin-bottom:6px;color:#185FA5">Task ${i+1}: ${t.jobType||'—'}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px;margin-bottom:8px">
+          <div><span style="font-size:11px;color:#5a6a7e;display:block">Installer</span>${t.installer||'—'}</div>
+          <div><span style="font-size:11px;color:#5a6a7e;display:block">Transport</span>${t.transport||'—'}</div>
+        </div>
+        ${t.remark?`<div style="font-size:11px;color:#5a6a7e;margin-bottom:4px">Remark</div><div class="remark-box">${t.remark}</div>`:''}
+      </div>`).join('')}`:''}
+
+    <div class="section-title">Update Status</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${STATUS.map(s=>`<button class="btn btn-sm${j.status===s.k?' btn-primary':''}" onclick="updateSt('${j.id}','${s.k}')">${s.l}</button>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;padding-top:12px;border-top:1px solid #e8edf2">
+      <button class="btn btn-primary btn-sm" onclick="openForm('${j.id}')">Edit</button>
+      <button class="btn btn-sm btn-danger" onclick="delJob('${j.id}')">Delete</button>
+      <button class="btn btn-sm" style="margin-left:auto" onclick="closeModal()">Close</button>
+    </div>`;
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+async function updateSt(id,status){
+  const r=await rest('/jobs?id=eq.'+id,{method:'PATCH',body:JSON.stringify({status})});
+  if(r.ok){const j=jobs.find(x=>x.id===id);if(j)j.status=status;viewJob(id);render();}
+  else alert('Update failed. Please try again.');
+}
+async function delJob(id){
+  if(!confirm('Are you sure you want to delete this job?'))return;
+  const r=await rest('/jobs?id=eq.'+id,{method:'DELETE'});
+  if(r.ok){jobs=jobs.filter(j=>j.id!==id);closeModal();render();}
+  else alert('Delete failed.');
+}
+
+// ---- TASK BLOCK ----
+function buildTaskBlock(idx, data={}){
+  const jt=data.jobType||'';
+  const ins=data.installer||'';
+  const tr=data.transport||'';
+  const rm=data.remark||'';
+  return `
+  <div class="task-block" id="task-${idx}">
+    <button class="remove-task" onclick="removeTask(${idx})" title="Remove task">✕</button>
+    <div class="task-block-num">Task #<span class="task-idx">${idx+1}</span></div>
+    <label>Job Type</label>
+    <select style="margin-bottom:0" onchange="handleJobTypeChange(this,${idx})">
+      <option value="">— Select Job Type —</option>
+      ${JOB_TYPES.map(t=>`<option value="${t}"${jt===t?' selected':''}>${t}</option>`).join('')}
+    </select>
+    <div class="grid2" style="margin-top:10px">
+      <div>
+        <label>Installer</label>
+        <select id="task-installer-${idx}" style="margin-bottom:0">
+          <option value="">— None —</option>
+          ${INSTALLERS.map(n=>`<option value="${n}"${ins===n?' selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label>Transport</label>
+        <select id="task-transport-${idx}" style="margin-bottom:0">
+          <option value="">— None —</option>
+          ${TRANSPORT.map(n=>`<option value="${n}"${tr===n?' selected':''}>${n}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <label>Remark / On-site Instructions</label>
+    <textarea id="task-remark-${idx}" placeholder="Describe what needs to be done on-site...">${rm}</textarea>
+  </div>`;
+}
+
+function handleJobTypeChange(sel, idx){
+  const jobType=sel.value;
+  const auto=autoAssign(jobType);
+  if(auto.installer){
+    const ins=document.getElementById('task-installer-'+idx);
+    if(ins)ins.value=auto.installer;
+  }
+  if(auto.transport){
+    const tr=document.getElementById('task-transport-'+idx);
+    if(tr)tr.value=auto.transport;
+  }
+}
+
+let taskIds=[];
+function addTask(data={}){
+  const idx=taskCounter++;
+  taskIds.push(idx);
+  const container=document.getElementById('tasks-container');
+  const div=document.createElement('div');
+  div.innerHTML=buildTaskBlock(idx,data);
+  container.appendChild(div.firstElementChild);
+  renumberTasks();
+}
+function removeTask(idx){
+  const el=document.getElementById('task-'+idx);
+  if(el){el.remove();taskIds=taskIds.filter(i=>i!==idx);renumberTasks();}
+}
+function renumberTasks(){
+  document.querySelectorAll('.task-block').forEach((el,i)=>{
+    const num=el.querySelector('.task-idx');
+    if(num)num.textContent=i+1;
+  });
+}
+function getTasksData(){
+  return taskIds.filter(idx=>document.getElementById('task-'+idx)).map(idx=>({
+    jobType:(document.querySelector(`#task-${idx} select`)?.value)||'',
+    installer:document.getElementById('task-installer-'+idx)?.value||'',
+    transport:document.getElementById('task-transport-'+idx)?.value||'',
+    remark:document.getElementById('task-remark-'+idx)?.value||''
+  }));
+}
+
+function openForm(id){
+  taskCounter=0;taskIds=[];
+  const job=id?jobs.find(j=>j.id===id):null;
+  const isEdit=!!job;
+  const today=new Date().toISOString().slice(0,10);
+  const j=job||{created_by:userName,client:'',brand:'',address:'',dept:DEPTS[0],start_date:today,end_date:today,status:'pending',priority:'med',tasks:[]};
+  let existingTasks=[];
+  try{existingTasks=typeof j.tasks==='string'?JSON.parse(j.tasks):j.tasks||[];}catch(e){}
+
+  document.getElementById('modal-body').innerHTML=`
+    <button style="float:right;background:none;border:none;font-size:20px;cursor:pointer;color:#8a9ab0" onclick="closeModal()">✕</button>
+    <div style="font-size:17px;font-weight:600;margin-bottom:18px">${isEdit?'Edit Job':'New Job'}</div>
+
+    <div style="background:#f0f4f8;border-radius:8px;padding:10px 14px;font-size:13px;color:#5a6a7e;margin-bottom:4px">
+      Created by: <strong style="color:#1a1a2e">${userName}</strong>
+    </div>
+
+    <div class="section-title">Client Information</div>
+    <div class="grid2">
+      <div><label>Client Name *</label><input id="f-cl" value="${j.client||''}" placeholder="Company name"></div>
+      <div><label>Brand</label><input id="f-br" value="${j.brand||''}" placeholder="Brand name"></div>
+    </div>
+    <label>Site Address</label>
+    <textarea id="f-ad" placeholder="Full on-site address" style="min-height:80px">${j.address||''}</textarea>
+
+    <div class="section-title">Schedule</div>
+    <div class="grid2">
+      <div><label>Start Date</label><input type="date" id="f-sd" value="${j.start_date||today}"></div>
+      <div><label>End Date</label><input type="date" id="f-ed" value="${j.end_date||today}"></div>
+    </div>
+    <div class="grid2">
+      <div>
+        <label>Status</label>
+        <select id="f-st">${STATUS.map(s=>`<option value="${s.k}"${j.status===s.k?' selected':''}>${s.l}</option>`).join('')}</select>
+      </div>
+      <div>
+        <label>Priority</label>
+        <select id="f-pr">${PRIORITY.map(p=>`<option value="${p.k}"${j.priority===p.k?' selected':''}>${p.l}</option>`).join('')}</select>
+      </div>
+    </div>
+
+    <div class="section-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>Tasks</span>
+      <button class="btn btn-add" onclick="addTask()">＋ Add Task</button>
+    </div>
+    <div id="tasks-container"></div>
+    <div id="no-tasks-msg" style="text-align:center;padding:16px 0;font-size:13px;color:#8a9ab0">No tasks yet. Click &ldquo;＋ Add Task&rdquo; above.</div>
+
+    <div style="display:flex;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid #e8edf2">
+      <button class="btn btn-primary" id="save-btn" onclick="saveJob(${isEdit?`'${j.id}'`:'null'})">${isEdit?'Save Changes':'Create Job'}</button>
+      <button class="btn" onclick="closeModal()">Cancel</button>
+    </div>`;
+
+  // Load existing tasks or add one blank
+  if(existingTasks.length>0){
+    existingTasks.forEach(t=>addTask(t));
+  } else {
+    addTask();
+  }
+  updateNoTasksMsg();
+  document.getElementById('modal').classList.remove('hidden');
+}
+
+function updateNoTasksMsg(){
+  const msg=document.getElementById('no-tasks-msg');
+  if(!msg)return;
+  msg.style.display=document.querySelectorAll('.task-block').length===0?'block':'none';
+}
+
+// Patch removeTask to also update message
+const _origRemove=window.removeTask;
+window.removeTask=function(idx){
+  const el=document.getElementById('task-'+idx);
+  if(el){el.remove();taskIds=taskIds.filter(i=>i!==idx);renumberTasks();updateNoTasksMsg();}
+};
+const _origAdd=window.addTask;
+window.addTask=function(data={}){
+  const idx=taskCounter++;
+  taskIds.push(idx);
+  const container=document.getElementById('tasks-container');
+  if(!container)return;
+  const div=document.createElement('div');
+  div.innerHTML=buildTaskBlock(idx,data);
+  container.appendChild(div.firstElementChild);
+  renumberTasks();
+  updateNoTasksMsg();
+};
+
+async function saveJob(id){
+  const g=i=>document.getElementById(i)?.value;
+  const tasks=getTasksData();
+  const data={
+    created_by:userName,
+    client:g('f-cl'),brand:g('f-br'),
+    address:g('f-ad'),
+    dept:g('f-dp')||DEPTS[0],
+    start_date:g('f-sd'),end_date:g('f-ed'),
+    status:g('f-st'),priority:g('f-pr'),
+    tasks:JSON.stringify(tasks),
+    user_id:user?.id,
+    assigned_to:tasks.map(t=>[t.installer,t.transport].filter(Boolean).join('/')).join(', ')
+  };
+  if(!data.client)return alert('Please enter the client name.');
+  const btn=document.getElementById('save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span>Saving...';
+  let r;
+  if(id===null){
+    r=await rest('/jobs',{method:'POST',body:JSON.stringify(data)});
+    if(r.ok&&r.data)jobs.unshift(Array.isArray(r.data)?r.data[0]:r.data);
+  }else{
+    r=await rest('/jobs?id=eq.'+id,{method:'PATCH',body:JSON.stringify(data)});
+    if(r.ok){const j=jobs.find(x=>x.id===id);if(j)Object.assign(j,data);}
+  }
+  btn.disabled=false;
+  if(!r.ok)return alert('Save failed: '+(r.data?.message||'Please try again.'));
+  closeModal();render();
+}
+
+function closeModal(){document.getElementById('modal').classList.add('hidden')}
+
+// Auto login
+(async()=>{
+  try{
+    const s=JSON.parse(localStorage.getItem('wms_session'));
+    if(s?.access_token){
+      const r=await fetch(SUPA_URL+'/auth/v1/user',{headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+s.access_token}});
+      if(r.ok){user=await r.json();session=s;userName=user?.user_metadata?.full_name||user?.email||'';await enterApp();return;}
+      localStorage.removeItem('wms_session');
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
