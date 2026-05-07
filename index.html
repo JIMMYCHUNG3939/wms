@@ -159,6 +159,13 @@ function autoAssign(jobType){
 let session=null,user=null,userName='',jobs=[],currentTab='dashboard';
 let fStatus='',fPriority='',fDept='';
 let taskCounter=0;
+const MONTHS=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+function formatDate(d){
+  if(!d)return"—";
+  const parts=d.split("-");
+  if(parts.length!==3)return d;
+  return `${String(parts[2]).padStart(2,"0")} ${MONTHS[parseInt(parts[1])-1]} ${parts[0]}`;
+}
 
 function showMsg(msg,isErr=true){
   const el=document.getElementById('auth-msg');
@@ -281,7 +288,7 @@ function renderDash(){
               <div style="font-weight:600;font-size:13px">${j.client||'—'}</div>
               <span class="badge ${getPr(j.priority).cls}">${getPr(j.priority).l}</span>
             </div>
-            <div style="font-size:12px;color:#5a6a7e;margin-bottom:8px">${j.brand||''} · ${j.start_date||''} → ${j.end_date||''}</div>
+            <div style="font-size:12px;color:#5a6a7e;margin-bottom:8px">${j.brand||''} · ${formatDate(j.start_date)} → ${formatDate(j.end_date)}</div>
             <span class="badge ${getSt(j.status).cls}">${getSt(j.status).l}</span>
           </div>`).join('')}
       </div>
@@ -327,8 +334,8 @@ function renderJobs(){
         <div><span class="badge ${getSt(j.status).cls}">${getSt(j.status).l}</span></div>
         <div><span class="badge ${getPr(j.priority).cls}">${getPr(j.priority).l}</span></div>
         <div style="font-size:12px;color:#5a6a7e">${j.dept||'—'}</div>
-        <div style="font-size:12px">${j.start_date||''}</div>
-        <div style="font-size:12px">${j.end_date||''}</div>
+        <div style="font-size:12px">${formatDate(j.start_date)}</div>
+        <div style="font-size:12px">${formatDate(j.end_date)}</div>
         <div onclick="event.stopPropagation()"><button class="btn btn-sm" onclick="viewJob('${j.id}')">View</button></div>
       </div>`).join('')}`;
 }
@@ -355,8 +362,8 @@ function viewJob(id){
 
     <div class="section-title">Schedule & Assignment</div>
     <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Department</span><span>${j.dept||'—'}</span></div>
-    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Start Date</span><span>${j.start_date||'—'}</span></div>
-    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">End Date</span><span>${j.end_date||'—'}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">Start Date</span><span>${formatDate(j.start_date)}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:7px;font-size:13px"><span style="color:#5a6a7e;min-width:80px;font-size:12px">End Date</span><span>${formatDate(j.end_date)}</span></div>
 
     ${tasks.length>0?`
     <div class="section-title">Tasks (${tasks.length})</div>
@@ -432,15 +439,15 @@ function buildTaskBlock(idx, data={}){
 
 function handleJobTypeChange(sel, idx){
   const jobType=sel.value;
+  // Always clear both fields first
+  const ins=document.getElementById('task-installer-'+idx);
+  const tr=document.getElementById('task-transport-'+idx);
+  if(ins)ins.value='';
+  if(tr)tr.value='';
+  // Then auto-assign based on job type
   const auto=autoAssign(jobType);
-  if(auto.installer){
-    const ins=document.getElementById('task-installer-'+idx);
-    if(ins)ins.value=auto.installer;
-  }
-  if(auto.transport){
-    const tr=document.getElementById('task-transport-'+idx);
-    if(tr)tr.value=auto.transport;
-  }
+  if(auto.installer&&ins)ins.value=auto.installer;
+  if(auto.transport&&tr)tr.value=auto.transport;
 }
 
 let taskIds=[];
