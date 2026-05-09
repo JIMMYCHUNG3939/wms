@@ -172,7 +172,7 @@ const INSTALLERS=['Roy','Haffiz','Others'];
 const TRANSPORT=['Haffiz','Roy','Others'];
 const MONTHS_SHORT=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const MONTHS_LONG=['January','February','March','April','May','June','July','August','September','October','November','December'];
-const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 let session=null,user=null,userName='',jobs=[],currentTab='calendar';
 let fStatus='',fPriority='',fDept='';
@@ -285,12 +285,13 @@ function getJobsForDate(ymd){
 function renderCalendar(){
   const today=new Date();
   const firstDay=new Date(calYear,calMonth,1).getDay();
+  const firstDayMon=(firstDay===0)?6:firstDay-1;
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
 
   let cells='';
   // Prev month days
-  for(let i=firstDay-1;i>=0;i--){
+  for(let i=firstDayMon-1;i>=0;i--){
     const d=daysInPrev-i;
     const ymd=toYMD(calMonth===0?calYear-1:calYear,calMonth===0?11:calMonth-1,d);
     cells+=`<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
@@ -306,8 +307,8 @@ function renderCalendar(){
     </div>`;
   }
   // Next month
-  const totalCells=Math.ceil((firstDay+daysInMonth)/7)*7;
-  for(let d=1;d<=totalCells-firstDay-daysInMonth;d++){
+  const totalCells=Math.ceil((firstDayMon+daysInMonth)/7)*7;
+  for(let d=1;d<=totalCells-firstDayMon-daysInMonth;d++){
     cells+=`<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
   }
 
