@@ -68,6 +68,15 @@ label{font-size:12px;color:#5a6a7e;display:block;margin-bottom:4px;margin-top:10
 @keyframes spin{to{transform:rotate(360deg)}}
 .empty{text-align:center;padding:56px 0;color:#8a9ab0;font-size:13px}
 .dept-bar{flex:1;background:#e8edf2;border-radius:99px;height:8px;overflow:hidden}
+.job-pill{display:block;border-radius:4px;padding:2px 5px;font-size:10px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill-installer{background:#EAF3DE;color:#3B6D11}
+.pill-transport{background:#FAEEDA;color:#854F0B}
+.filter-bar{display:flex;gap:6px;margin-bottom:14px}
+.filter-pill{padding:5px 16px;font-size:12px;border-radius:99px;border:1px solid #d1d9e0;background:#fff;color:#5a6a7e;cursor:pointer;font-family:inherit;transition:all .15s}
+.filter-pill.fp-active-all{background:#185FA5;color:#fff;border-color:#185FA5}
+.filter-pill.fp-active-installer{background:#EAF3DE;color:#3B6D11;border-color:#7CB95A;font-weight:500}
+.filter-pill.fp-active-transport{background:#FAEEDA;color:#854F0B;border-color:#EF9F27;font-weight:500}
+
 .dept-fill{background:#185FA5;height:100%;border-radius:99px;transition:width .5s}
 .task-block{background:#f8fafc;border:1px solid #e8edf2;border-radius:10px;padding:14px 16px;margin-bottom:10px;position:relative}
 .task-block-num{font-size:11px;font-weight:600;color:#185FA5;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
@@ -179,6 +188,7 @@ let fStatus='',fPriority='',fDept='';
 let taskCounter=0,taskIds=[];
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let selectedDate=null;
+let calFilter='all'; // 'all','installer','transport'
 
 function formatDate(d){
   if(!d)return'—';
@@ -309,8 +319,29 @@ function getSt(k){return STATUS.find(s=>s.k===k)||STATUS[0]}
 function getPr(k){return PRIORITY.find(p=>p.k===k)||PRIORITY[0]}
 
 // ---- CALENDAR ----
-function getJobsForDate(ymd){
-  return jobs.filter(j=>j.start_date<=ymd&&j.end_date>=ymd);
+const INSTALLER_JOBS=['Install Equipment','Dismantle Equipment'];
+const TRANSPORT_JOBS=['Remove Equipment','Delivery Equipment'];
+
+function jobCategory(j){
+  let tasks=[];
+  try{tasks=typeof j.tasks==='string'?JSON.parse(j.tasks):j.tasks||[];}catch(e){}
+  const hasInstaller=tasks.some(t=>INSTALLER_JOBS.includes(t.jobType));
+  const hasTransport=tasks.some(t=>TRANSPORT_JOBS.includes(t.jobType));
+  if(hasInstaller&&hasTransport)return'both';
+  if(hasInstaller)return'installer';
+  if(hasTransport)return'transport';
+  return'other';
+}
+
+function getJobsForDate(ymd,filter='all'){
+  return jobs.filter(j=>{
+    if(!(j.start_date<=ymd&&j.end_date>=ymd))return false;
+    if(filter==='all')return true;
+    const cat=jobCategory(j);
+    if(filter==='installer')return cat==='installer'||cat==='both';
+    if(filter==='transport')return cat==='transport'||cat==='both';
+    return true;
+  });
 }
 
 function renderCalendar(){
@@ -321,29 +352,47 @@ function renderCalendar(){
   const daysInPrev=new Date(calYear,calMonth,0).getDate();
 
   let cells='';
-  // Prev month days
   for(let i=firstDayMon-1;i>=0;i--){
     const d=daysInPrev-i;
-    const ymd=toYMD(calMonth===0?calYear-1:calYear,calMonth===0?11:calMonth-1,d);
     cells+=`<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
   }
-  // Current month
   for(let d=1;d<=daysInMonth;d++){
     const ymd=toYMD(calYear,calMonth,d);
-    const dayJobs=getJobsForDate(ymd);
+    const dayJobs=getJobsForDate(ymd,calFilter);
     const isToday=today.getFullYear()===calYear&&today.getMonth()===calMonth&&today.getDate()===d;
+    let pills='';
+    dayJobs.forEach(j=>{
+      const cat=jobCategory(j);
+      const label=j.brand||j.client||'—';
+      if(calFilter==='all'){
+        if(cat==='installer')pills+=`<span class="job-pill pill-installer">${label}</span>`;
+        else if(cat==='transport')pills+=`<span class="job-pill pill-transport">${label}</span>`;
+        else if(cat==='both'){
+          pills+=`<span class="job-pill pill-installer">${label}</span>`;
+          pills+=`<span class="job-pill pill-transport">${label}</span>`;
+        } else pills+=`<span class="job-pill" style="background:var(--color-background-secondary);color:var(--color-text-secondary)">${label}</span>`;
+      } else if(calFilter==='installer'){
+        pills+=`<span class="job-pill pill-installer">${label}</span>`;
+      } else if(calFilter==='transport'){
+        pills+=`<span class="job-pill pill-transport">${label}</span>`;
+      }
+    });
     cells+=`<div class="cal-cell${isToday?' today':''}${dayJobs.length>0?' has-jobs':''}" onclick="selectDate('${ymd}')">
-      <div class="cal-date">${d}</div>
-      ${dayJobs.length>0?`<div class="cal-count">${dayJobs.length} job${dayJobs.length>1?'s':''}</div>`:''}
+      <div class="cal-date">${d}</div>${pills}
     </div>`;
   }
-  // Next month
   const totalCells=Math.ceil((firstDayMon+daysInMonth)/7)*7;
   for(let d=1;d<=totalCells-firstDayMon-daysInMonth;d++){
     cells+=`<div class="cal-cell other-month"><div class="cal-date">${d}</div></div>`;
   }
 
-  document.getElementById('content').innerHTML=`
+  const filterBar=`<div class="filter-bar">
+    <button class="filter-pill${calFilter==='all'?' fp-active-all':''}" onclick="calFilter='all';renderCalendar()">All</button>
+    <button class="filter-pill${calFilter==='installer'?' fp-active-installer':''}" onclick="calFilter='installer';renderCalendar()">Installer</button>
+    <button class="filter-pill${calFilter==='transport'?' fp-active-transport':''}" onclick="calFilter='transport';renderCalendar()">Transport</button>
+  </div>`;
+
+  document.getElementById('content').innerHTML=filterBar+`
     <div class="cal-header">
       <div class="cal-title">${MONTHS_LONG[calMonth]} ${calYear}</div>
       <div class="cal-nav">
@@ -353,9 +402,10 @@ function renderCalendar(){
       </div>
     </div>
     <div class="cal-grid">${DAYS.map(d=>`<div class="cal-day-name">${d}</div>`).join('')}${cells}</div>
-    <div style="display:flex;gap:14px;margin-top:8px;font-size:12px;color:#5a6a7e">
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f0f6ff;border:1.5px solid #185FA5;margin-right:4px"></span>Today</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#fff;border:1.5px solid #7CB95A;margin-right:4px"></span>Has Jobs</span>
+    <div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:#5a6a7e">
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#C0DD97;margin-right:4px;vertical-align:middle"></span>Installer</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#FAC775;margin-right:4px;vertical-align:middle"></span>Transport</span>
+      <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f0f6ff;border:1px solid #185FA5;margin-right:4px;vertical-align:middle"></span>Today</span>
     </div>`;
 }
 
@@ -375,11 +425,11 @@ function selectDate(ymd){
 function renderDayView(ymd){
   const parts=ymd.split('-');
   const dateLabel=`${String(parts[2]).padStart(2,'0')} ${MONTHS_SHORT[parseInt(parts[1])-1]} ${parts[0]}`;
-  const dayJobs=getJobsForDate(ymd);
+  const dayJobs=getJobsForDate(ymd,calFilter);
 
   document.getElementById('content').innerHTML=`
     <div class="day-view-header">
-      <button class="btn btn-sm" onclick="selectedDate=null;renderCalendar()">&#8249; Back to Calendar</button>
+      <button class="btn btn-sm" onclick="selectedDate=null;renderCalendar()">&#8249; Back</button>
       <div class="day-job-title" style="font-size:18px;font-weight:700">${dateLabel}</div>
       <span style="font-size:13px;color:#5a6a7e">${dayJobs.length} job${dayJobs.length!==1?'s':''}</span>
     </div>
